@@ -166,5 +166,8 @@ class CharacterActions : public Characters {
 };
 
 int main() {
+
+	std::cout << "Welcome to the RPG Game Engine!" << std::endl;
+	print("Actually it is still under progress \n coming soon! Please wait for more time~");
 	return 0;
 }
