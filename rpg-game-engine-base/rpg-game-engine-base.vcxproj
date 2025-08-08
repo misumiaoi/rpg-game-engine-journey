@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -123,15 +123,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ActionSystem.cpp" />
-    <ClCompile Include="CharacterBehavior.cpp" />
-    <ClCompile Include="CharacterData.cpp" />
-    <ClCompile Include="rpg-game-engine-base.cpp" />
+    <ClCompile Include="src\ActionSystem.cpp" />
+    <ClCompile Include="src\Characters.cpp" />
+    <ClCompile Include="src\rpg-game-engine-base.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ActionSystem.h" />
-    <ClInclude Include="CharacterBehavior.h" />
-    <ClInclude Include="CharacterData.h" />
+    <ClInclude Include="src\ActionSystem.h" />
+    <ClInclude Include="src\Characters.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
