@@ -1,0 +1,21 @@
+# Visual Studio generated files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.vs
+.vs/
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+build/
+[Bb]in/
+[Oo]bj/
+
+# Other
+*.opensdf
+*.sdf
+*.VC.db
+ipch/
