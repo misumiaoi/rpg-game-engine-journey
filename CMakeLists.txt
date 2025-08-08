@@ -13,9 +13,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # 告诉 CMake，我们的可执行文件是由哪些源文件编译而成的
 # 因为文件现在在 src 文件夹下，所以需要加上路径前缀
 add_executable(${PROJECT_NAME}
-    "RPGGameEngineBase/src/ActionSystem.cpp"
-    "RPGGameEngineBase/src/Characters.cpp"
-    "RPGGameEngineBase/src/rpg-game-engine-base.cpp"
+    "rpg-game-engine-base/src/ActionSystem.cpp"
+    "rpg-game-engine-base/src/Characters.cpp"
+    "rpg-game-engine-base/src/rpg-game-engine-base.cpp"
     # 如果你未来有更多的 .cpp 文件，就像这样一个个加进来
     # "src/MondstadtCharacter.cpp"
     # "src/LiyueCharacter.cpp"
