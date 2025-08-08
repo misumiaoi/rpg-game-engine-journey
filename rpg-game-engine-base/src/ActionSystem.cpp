@@ -1,6 +1,7 @@
 #include <iostream>
 #include "ActionSystem.h"
 #include "Characters.h"
+#include "UIACtions.h"
 
 int ActionSystem::CountDamage(Characters& chara1, Characters& chara2) {
 	if(chara1.getHP() <= 0 || chara2.getHP() <= 0) {

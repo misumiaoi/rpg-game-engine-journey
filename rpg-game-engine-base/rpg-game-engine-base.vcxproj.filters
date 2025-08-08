@@ -15,21 +15,27 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="rpg-game-engine-base.cpp">
+    <ClCompile Include="src\ActionSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Characters.cpp">
+    <ClCompile Include="src\Characters.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ActionSystem.cpp">
+    <ClCompile Include="src\rpg-game-engine-base.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UIActions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Characters.h">
+    <ClInclude Include="src\ActionSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ActionSystem.h">
+    <ClInclude Include="src\Characters.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\UIACtions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
