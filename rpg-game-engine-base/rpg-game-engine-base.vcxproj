@@ -123,7 +123,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ActionSystem.cpp" />
+    <ClCompile Include="CharacterBehavior.cpp" />
+    <ClCompile Include="CharacterData.cpp" />
     <ClCompile Include="rpg-game-engine-base.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ActionSystem.h" />
+    <ClInclude Include="CharacterBehavior.h" />
+    <ClInclude Include="CharacterData.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
