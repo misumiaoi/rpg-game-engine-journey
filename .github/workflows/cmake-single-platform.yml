@@ -1,39 +1,136 @@
-# This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
-# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
-name: CMake on a single platform
+# 工作流的名称，会显示在 GitHub Actions 页面上
+name: Build, Test, and Release
 
+# 触发工作流的条件
 on:
+  # 当有代码推送到 main 分支时触发
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
+  # 当有新的标签（比如 v0.1）被推送时也触发
+  # 这是为了我们的自动打包发布功能
+  create:
+    tags:
+      - 'v*.*.*'
 
-env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
-
+# 工作流包含的任务
 jobs:
-  build:
-    # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
-    # You can convert this to a matrix build if you need cross-platform coverage.
-    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+  # --- 第一个任务：构建和测试 ---
+  build_and_test:
+    # 任务的名称
+    name: Build & Test
+
+    # 我们希望在多个操作系统上运行这个任务
+    # 这就是“跨平台构建”的核心
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    # 指定任务运行在哪种虚拟机上，这里会使用上面 matrix 定义的系统
+    runs-on: ${{ matrix.os }}
+
+    # 任务包含的步骤
+    steps:
+    # 第一步：获取你的代码
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # 第二步：配置 CMake
+    # 注意：我们给这一步加了一个 id，方便后面引用它的路径
+    - name: Configure CMake
+      id: configure
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
+
+    # 第三步：构建项目
+    - name: Build project
+      run: cmake --build ${{github.workspace}}/build --config Release
+
+    # 第四步：运行自动化测试（我们解锁的第一个新能力！）
+    # 这一步会尝试运行编译出来的可执行文件
+    # 如果程序运行出错（比如崩溃），整个工作流就会失败并通知你
+    - name: Run executable test
+      # Windows 上的可执行文件有 .exe 后缀，其他系统没有
+      # 我们需要根据操作系统来决定运行哪个文件
+      run: |
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          ${{github.workspace}}/build/Release/rpg_game_engine_journey.exe
+        else
+          ${{github.workspace}}/build/rpg_game_engine_journey
+        fi
+
+    # 第五步：打包构建好的文件（为发布做准备）
+    # 这一步会把可执行文件打包，方便下一个任务使用
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: rpg-game-executable-${{ matrix.os }}
+        path: |
+          ${{github.workspace}}/build/Release/rpg_game_engine_journey.exe
+          ${{github.workspace}}/build/rpg_game_engine_journey
+        if-no-files-found: ignore
+
+  # --- 第二个任务：创建和发布版本 ---
+  release:
+    # 任务的名称
+    name: Create Release
+
+    # 这个任务只在 “build_and_test” 任务成功完成后才运行
+    needs: build_and_test
+
+    # 这个任务只在有新的标签被推送时才运行
+    if: startsWith(github.ref, 'refs/tags/')
+
+    # 这个任务只需要在 Ubuntu 上运行一次就行了
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    # 第一步：下载所有平台打包好的文件
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
 
-    - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+    # 第二步：创建 GitHub Release
+    # 这个魔法会自动创建一个新的版本草稿
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name }}
+        release_name: Release ${{ github.ref_name }}
+        body: |
+          自动打包发布，请从下方下载对应平台的版本。
+        draft: false
+        prerelease: false
 
-    - name: Build
-      # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
-
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      # Execute tests defined by the CMake configuration.
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest -C ${{env.BUILD_TYPE}}
-
+    # 第三步：将打包好的文件上传到 Release 页面
+    - name: Upload Windows Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./artifacts/rpg-game-executable-windows-latest/rpg_game_engine_journey.exe
+        asset_name: rpg-game-windows.exe
+        asset_content_type: application/octet-stream
+    
+    - name: Upload Linux Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./artifacts/rpg-game-executable-ubuntu-latest/rpg_game_engine_journey
+        asset_name: rpg-game-linux
+        asset_content_type: application/octet-stream
+        
+    - name: Upload macOS Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./artifacts/rpg-game-executable-macos-latest/rpg_game_engine_journey
+        asset_name: rpg-game-macos
+        asset_content_type: application/octet-stream
