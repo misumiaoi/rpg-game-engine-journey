@@ -1,170 +1,181 @@
 #include <iostream>
 #include <memory>
+#include <string>
+#include <vector>
+#include <map>
+#include <stdexcept>
+#include <algorithm> // For std::min, std::max
 
-template <typename type>
-void print(type input) {
-	std::cout << input << std::endl;
-}
+// --- Forward Declarations ---
+// Pre-declaring classes that are used by others before they are fully defined.
+class Character;
+class ActionSystem;
 
-template <typename type>
-void read(type& readed) {
-	std::cin >> readed;
-}
+// --- Pure Data Layer ---
+// A simple struct to hold all character stats. No logic, no virtual functions.
+struct CharacterData {
+    std::string name;
+    std::string character_type;
+    int atk = 100, def = 100, crit_rate = 5, crit_dmg = 50;
+    int hp = 1000, max_hp = 1000, shield = 0;
+    int energy = 0, max_energy = 100;
+    int skill_cooldown = 0, skill_cooldown_max = 3;
 
-class Characters {
+    bool isDead() const { return hp <= 0; }
+};
+
+// --- Behavior Interface (Strategy Pattern) ---
+// It defines WHAT a character can do, but not HOW.
+class ICharacterBehavior {
 public:
-	enum elements {
-		water, fire, grass, rock, electric, ice, wind, hikari, tairitsu
-	};
+    virtual ~ICharacterBehavior() = default;
+    virtual void performSkill(ActionSystem& ctx, Character& attacker, Character& target) = 0;
+    virtual void performBurst(ActionSystem& ctx, Character& attacker, Character& target) = 0;
+};
 
-	Characters() {
-		atk = 100;
-		def = 100;
-		crit_rate = 0;
-		crit_dmg = 0;
-		hp = 1000;
-		element_master = 0;
-		element = water;
-	}
-
-	void setElements(int init) {
-		if (init >= water && init <= tairitsu)
-			element = static_cast<elements>(init);
-	}
-
-	int getHP() { return hp; }
-	void setAtk(int init) { atk = init; }
-	void setDef(int init) { def = init; }
-	void setCritRate(int init) { crit_rate = init; }
-	void setCritDmg(int init) { crit_dmg = init; }
-	void setHp(int init) { hp = init; }
-	void setElementMaster(int init) { element_master = init; }
-
-	int getAtk() { return atk; }
-	int getDef() { return def; }
-	int getCritRate() { return crit_rate; }
-	int getCritDmg() { return crit_dmg; }
-
-	virtual void setElement(int init) {
-		if (init >= water && init <= tairitsu)
-			element = static_cast<elements>(init);
-	}
-
+// --- The "Live" Character Class ---
+// This class brings together the Data and the Behavior.
+class Character {
 private:
-	int atk, def, crit_rate, crit_dmg, hp, element_master;
-	elements element;
-	bool is_activated = false;
-	bool if_dead = false;
-};
+    CharacterData data;
+    std::unique_ptr<ICharacterBehavior> behavior;
 
-class MondstadtCharacter : public Characters {
 public:
-	MondstadtCharacter() {
-		this->setElements(6); // wind
-	}
+    // Constructor takes the data and behavior to "assemble" a character.
+    Character(CharacterData d, std::unique_ptr<ICharacterBehavior> b)
+        : data(std::move(d)), behavior(std::move(b)) {
+    }
 
-	void setAtk(int init) {
-		Characters::setAtk(init + 50);
-	}
+    // Provides access to the data and behavior.
+    CharacterData& getData() { return data; }
+    const CharacterData& getData() const { return data; }
+    ICharacterBehavior* getBehavior() { return behavior.get(); }
 
-	void setElement(int init) override {
-		if (init == 6)
-			Characters::setElement(init);
-		else
-			std::cout << "Invalid element for MondstadtCharacter. Must be wind." << std::endl;
-	}
-
-	~MondstadtCharacter() {
-		print("The winds of Mondstadt carry tales of freedom and adventure.");
-	}
+    // A helper function for turn updates.
+    void onTurnStart() {
+        if (data.skill_cooldown > 0) {
+            data.skill_cooldown--;
+        }
+        data.energy = std::min(data.max_energy, data.energy + 10);
+    }
 };
 
-class LiyueCharacter : public Characters {
+// --- Logic System (The "Game Rules" Engine) ---
+// This class is still stateless. It operates on the final Character objects.
+class ActionSystem {
 public:
-	LiyueCharacter() {
-		this->setElements(3); // rock
-	}
+    void applyDamage(Character& target, int damage) {
+        auto& data = target.getData();
+        if (data.isDead()) return;
 
-	~LiyueCharacter() {
-		print("The mountains of Liyue are silent, but their strength remains.");
-	}
+        int actual_damage = std::max(0, damage - data.def);
+        data.hp -= actual_damage;
+        std::cout << data.name << " takes " << actual_damage << " damage. HP: " << data.hp << std::endl;
+
+        if (data.isDead()) {
+            data.hp = 0;
+            std::cout << data.name << " has been defeated!" << std::endl;
+        }
+    }
+
+    void performAttack(Character& attacker, Character& target) {
+        auto& attacker_data = attacker.getData();
+        if (attacker_data.isDead()) return;
+
+        std::cout << attacker_data.name << " attacks " << target.getData().name << "!" << std::endl;
+        applyDamage(target, attacker_data.atk);
+        attacker_data.energy = std::min(attacker_data.max_energy, attacker_data.energy + 20);
+    }
+
+    void performSkill(Character& attacker, Character& target) {
+        auto& attacker_data = attacker.getData();
+        if (attacker_data.isDead()) return;
+        if (attacker_data.skill_cooldown > 0) {
+            std::cout << attacker_data.name << "'s skill is on cooldown!" << std::endl;
+            return;
+        }
+        // Delegate the "how" to the character's specific behavior object.
+        attacker.getBehavior()->performSkill(*this, attacker, target);
+        attacker_data.skill_cooldown = attacker_data.skill_cooldown_max;
+    }
+
+    void performBurst(Character& attacker, Character& target) {
+        auto& attacker_data = attacker.getData();
+        if (attacker_data.isDead()) return;
+        if (attacker_data.energy < attacker_data.max_energy) {
+            std::cout << attacker_data.name << " does not have enough energy!" << std::endl;
+            return;
+        }
+        attacker.getBehavior()->performBurst(*this, attacker, target);
+        attacker_data.energy = 0;
+    }
 };
 
-class FontaineCharacter : public Characters {
+// --- Concrete Behavior Implementations ---
+// These classes provide the actual logic (the "HOW").
+class MondstadtBehavior : public ICharacterBehavior {
 public:
-	FontaineCharacter() {
-		this->setElements(0); // water
-		this->setCritRate(20);
-	}
-
-	~FontaineCharacter() {
-		print("The waters of Fontaine whisper secrets of the deep.");
-	}
+    void performSkill(ActionSystem& ctx, Character& attacker, Character& target) override {
+        std::cout << attacker.getData().name << " uses Gale Blade!" << std::endl;
+        ctx.applyDamage(target, attacker.getData().atk * 1.2);
+    }
+    void performBurst(ActionSystem& ctx, Character& attacker, Character& target) override {
+        std::cout << attacker.getData().name << " unleashes Dandelion Breeze!" << std::endl;
+        ctx.applyDamage(target, attacker.getData().atk * 2.0);
+    }
 };
 
-class CharacterFromArcaea : public Characters {
+class LiyueBehavior : public ICharacterBehavior {
 public:
-	CharacterFromArcaea() {
-		print("Was this character born in light or dark?");
-		int characterset = 0;
-		read(characterset);
-		if (characterset == 0)
-			this->setElements(7); // hikari
-		else if (characterset == 1)
-			this->setElements(8); // tairitsu
-		else {
-			std::cout << "Invalid choice. Defaulting to 'hikari'." << std::endl;
-			this->setElements(7);
-		}
-	}
-
-	~CharacterFromArcaea() {
-		print("She diminished in a shade of light, without music or conflict");
-	}
+    void performSkill(ActionSystem& ctx, Character& attacker, Character& target) override {
+        std::cout << attacker.getData().name << " summons a Jade Shield!" << std::endl;
+        // Logic for shield would go here. For simplicity, we'll just do a small attack.
+        ctx.applyDamage(target, attacker.getData().def * 0.5);
+    }
+    void performBurst(ActionSystem& ctx, Character& attacker, Character& target) override {
+        std::cout << attacker.getData().name << " calls down Planet Befall!" << std::endl;
+        ctx.applyDamage(target, attacker.getData().max_hp * 0.2);
+    }
 };
 
-class CharacterActions : public Characters {
-	void attack(Characters& target, int amount) {
-		std::cout << "Attacking target!" << std::endl;
-		target.setHp(target.getHP() - amount);
-	}
-
-	void defend() {
-		std::cout << "Defending!" << std::endl;
-		// Implement defend logic here
-	}
-
-	void heal(Characters& target, int amount) {
-		std::cout << "Healing for " << amount << " HP!" << std::endl;
-		target.setHp(target.getHP() + amount);
-		// Implement healing logic here
-	}
-
-	void elementBurst(Characters& target, Characters::elements elementType) {
-		std::cout << "Using Element Burst with element type: " << elementType << std::endl;
-		int baseAtk = this->getAtk();
-		int critRate = this->getCritRate();
-		int critDmg = this->getCritDmg();
-
-		int damage = static_cast<int>(baseAtk * 1.5);
-		int roll = rand() % 100;
-		bool isCrit = (roll < critRate);
-
-		if (isCrit) {
-			damage += static_cast<int>(damage * (critDmg / 100.0));
-			std::cout << "Critical Hit! ";
-		}
-
-		std::cout << "Element Burst deals " << damage << " damage!" << std::endl;
-		target.setHp(target.getHP() - damage);
-	}
-
-	void elementSkill(Characters& target, Characters::elements elementType) {
-		std::cout << "Using Element Skill with element type: " << elementType << std::endl;
-		// Implement element skill logic here
-	}
+// --- Character Factory ---
+// This class knows how to "build" characters based on a type.
+class CharacterFactory {
+public:
+    std::unique_ptr<Character> createCharacter(const std::string& type, const std::string& name) {
+        if (type == "Mondstadt") {
+            CharacterData data;
+            data.name = name;
+            data.character_type = type;
+            data.atk += 20;
+            return std::make_unique<Character>(std::move(data), std::make_unique<MondstadtBehavior>());
+        }
+        if (type == "Liyue") {
+            CharacterData data;
+            data.name = name;
+            data.character_type = type;
+            data.def += 50;
+            data.max_hp += 500;
+            data.hp = data.max_hp;
+            return std::make_unique<Character>(std::move(data), std::make_unique<LiyueBehavior>());
+        }
+        throw std::runtime_error("Unknown character type requested.");
+    }
 };
 
+// --- Main Game Loop ---
 int main() {
-	return 0;
+    CharacterFactory factory;
+    ActionSystem actions;
+
+    auto jean = factory.createCharacter("Mondstadt", "Jean");
+    auto zhongli = factory.createCharacter("Liyue", "Zhongli");
+
+    std::cout << "--- Battle Start! ---" << std::endl;
+    actions.performSkill(*jean, *zhongli);
+    std::cout << "--------------------" << std::endl;
+    actions.performAttack(*zhongli, *jean);
+    std::cout << "--------------------" << std::endl;
+
+    return 0;
 }
