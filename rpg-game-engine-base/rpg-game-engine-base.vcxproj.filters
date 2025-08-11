@@ -24,12 +24,6 @@
     <ClCompile Include="ActionSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ConsoleInterface.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ConsoleInterface.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Characters.h">
@@ -38,10 +32,7 @@
     <ClInclude Include="ActionSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\ConsoleInterface.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ConsoleInterface.h">
+    <ClInclude Include="CharacterBehavior.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
