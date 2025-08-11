@@ -131,6 +131,7 @@
   <ItemGroup>
     <ClInclude Include="src\ActionSystem.h" />
     <ClInclude Include="src\Characters.h" />
+    <ClInclude Include="src\ConsoleInterface.h" />
     <ClInclude Include="src\UIACtions.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
