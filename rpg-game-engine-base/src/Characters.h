@@ -34,7 +34,8 @@ public:
 	}
 
 private:
-	int atk, def, crit_rate, crit_dmg, hp, element_master;
+	int atk, def, crit_dmg, hp, element_master;
+	float crit_rate;
 	elements element;
 	int shield; 
 	bool is_activated = false;
