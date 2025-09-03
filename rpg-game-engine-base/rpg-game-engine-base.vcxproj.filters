@@ -27,6 +27,9 @@
     <ClCompile Include="src\UIActions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="generalItems.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ActionSystem.h">
@@ -36,6 +39,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\UIACtions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="generalItems.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

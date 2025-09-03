@@ -123,12 +123,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="generalItems.cpp" />
     <ClCompile Include="src\ActionSystem.cpp" />
     <ClCompile Include="src\Characters.cpp" />
     <ClCompile Include="src\rpg-game-engine-base.cpp" />
     <ClCompile Include="src\UIActions.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="generalItems.h" />
     <ClInclude Include="src\ActionSystem.h" />
     <ClInclude Include="src\Characters.h" />
     <ClInclude Include="src\UIACtions.h" />
